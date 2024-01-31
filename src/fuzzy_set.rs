@@ -1,16 +1,20 @@
-use std::ops::RangeInclusive;
+use std::{collections::HashMap, ops::RangeInclusive};
 
+
+type FuzzyOperation<T> = fn(&FuzzySet<T>, &FuzzySet<T>) -> FuzzySet<T>;
 #[derive(Debug)]
 pub struct FuzzySet<T> {
     elements: Vec<(T, f32)>,
     membership_interval: RangeInclusive<f32>,
+    operations: HashMap<String, FuzzyOperation<T>>
 }
 
 impl<T: PartialOrd + Copy> FuzzySet<T> {
     pub fn new(elements: Vec<(T, f32)>, membership_interval: Option<RangeInclusive<f32>>) -> FuzzySet<T> {
+        let operations = FuzzySet::get_operation_map();
         match membership_interval {
-            Some(membership_interval) => FuzzySet {elements, membership_interval},
-            None => FuzzySet{elements, membership_interval: (0.0..=1.0)},
+            Some(membership_interval) => FuzzySet {elements, membership_interval, operations},
+            None => FuzzySet{elements, membership_interval: (0.0..=1.0), operations},
         }
     }
 
@@ -66,8 +70,8 @@ impl<T: PartialOrd + Copy> FuzzySet<T> {
             |x: f32, y: f32| x.min(y))
     }
 
-    pub fn implication() {
-
+    pub fn implication(&self, other: &FuzzySet<T>) -> FuzzySet<T> {
+        FuzzySet::new(vec![], None)
     }
 
     pub fn defuzzyfication() {
@@ -76,6 +80,16 @@ impl<T: PartialOrd + Copy> FuzzySet<T> {
 }
 
 impl<T: PartialOrd + Copy> FuzzySet<T> {
+    fn get_operation_map() -> HashMap<String, FuzzyOperation<T>> {
+        let mut operations:HashMap<String, FuzzyOperation<T>> = HashMap::new();
+        let names = vec!["union", "intersection", "implication"];
+        let functions:Vec<FuzzyOperation<T>> = vec![FuzzySet::union, FuzzySet::intersection, FuzzySet::implication];
+        for (name, fun) in names.iter().zip(functions) {
+            operations.insert(name.to_string(), fun);
+        }
+        operations
+    }
+
     fn is_membership_within_interval(&self, mem: f32) -> bool {
         self.membership_interval.contains(&mem)
     }
