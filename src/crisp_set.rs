@@ -2,31 +2,31 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 
 #[derive(Debug)]
-pub struct Set {
-    elements: Vec<i32>,
+pub struct Set<T> {
+    elements: Vec<T>,
 }
 
-impl  Set {
-    pub fn new(elements: Vec<i32>) -> Set {
+impl<T: PartialOrd + Copy> Set<T> {
+    pub fn new(elements: Vec<T>) -> Set<T> {
         Set{elements}
     }
-    pub fn add(&mut self, value: i32) {
+    pub fn add(&mut self, value: T) {
         for item in &self.elements {
-            match value.cmp(item) {
-                Ordering::Equal => return,
+            match value.partial_cmp(item) {
+                Some(Ordering::Equal) => return,
                 _ => (),
             }
         }
         self.elements.push(value)
     }
 
-    pub fn remove(&mut self, value: i32) {
+    pub fn remove(&mut self, value: T) {
         if let Some(index) = self.elements.iter().position(|&x| x == value) {
             self.elements.remove(index);
         }
     }
 
-    pub fn union(&self, other: &Set) -> Set {
+    pub fn union(&self, other: &Set<T>) -> Set<T> {
         let mut set = Set::new(Vec::new());
 
         for item in &self.elements {
@@ -39,13 +39,13 @@ impl  Set {
         set
     }
 
-    pub fn intersection(&self, other: &Set) -> Set {
+    pub fn intersection(&self, other: &Set<T>) -> Set<T> {
         let set = self.difference(other);
         let set = self.difference(&set);
         set
     }
 
-    pub fn difference(&self, other: &Set) -> Set {
+    pub fn difference(&self, other: &Set<T>) -> Set<T> {
         let mut set = Set::new(Vec::new());
         for item in &self.elements {
             set.add(*item);
